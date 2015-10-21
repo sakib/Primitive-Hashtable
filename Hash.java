@@ -1,4 +1,4 @@
-public class Hash<T extends Comparable<T>> {
+public class Hash<T> {
 
     /* Represents number of items in map */
     private int capacity;
@@ -32,9 +32,18 @@ public class Hash<T extends Comparable<T>> {
 
     @SuppressWarnings("unchecked")
     public boolean set(String key, T value) {
-        // If the value is already set, return success
-        if (this.get(key).compareTo(value) == 0) {
-            return true;
+        // If the value already exists, return success
+        int hash = this.hash(key);
+        if (hash == -1) return false; // Error
+        if (this.get(key) != null) {
+            try {
+                for (int i = 0; i < this.cap_list[hash]; i++)
+                    if (this.key_list[hash][i].equals(key))
+                        this.value_list[hash][i] = value;
+                return true;
+            } catch (Exception e) {
+                return false; // Error
+            }
         } else if (this.load() == 1) {
             try {
                 /* Map is about to go over capacity.
@@ -49,13 +58,15 @@ public class Hash<T extends Comparable<T>> {
                 this.cap_list = new int[this.TABLE_SIZE];
                 this.capacity = 0;
 
-                for (int i = 0; i < this.cap_list.length; i++) {
+                for (int i = 0; i < this.TABLE_SIZE; i++) {
                     // New #s of columns should be on average half that of old.
                     // The # of rows doubled so the average # of cols should halve.
-                    this.key_list[i] = new String[old_cap_list[i]/2];
-                    this.value_list[i] = (T[]) (new Object[old_cap_list[i]/2]);
+                    this.key_list[i] = new String[1+old_cap_list[i/2]/2];
+                    this.value_list[i] = (T[]) (new Object[1+old_cap_list[i/2]/2]);
                     this.cap_list[i] = 0;
                 }
+
+                System.out.println("I LOVE WEED");
 
                 // Insert every key-value pair from the old hashmap into this.
                 for (int i = 0; i < TABLE_SIZE/2; i++) {
@@ -73,8 +84,6 @@ public class Hash<T extends Comparable<T>> {
         } else {
             try {
                 // There is enough free capacity. Insert freely
-                int hash = this.hash(key);
-                if (hash == -1) return false; // Error
                 if (this.key_list[hash].length == this.cap_list[hash]) {
                     // Both arrays are at capacity. Double them.
                     String[] new_key_list = new String[this.cap_list[hash]*2];
@@ -105,9 +114,9 @@ public class Hash<T extends Comparable<T>> {
         try {
             int hash = this.hash(key);
             if (hash == -1) return null; // Error
-            for (int i = 0; i < cap_list[hash]; i++) {
-                if (key_list[hash][i].equals(key)) {
-                    return value_list[hash][i];
+            for (int i = 0; i < this.cap_list[hash]; i++) {
+                if (this.key_list[hash][i].equals(key)) {
+                    return this.value_list[hash][i];
                 }
             }
             return null; // Key not found
@@ -135,7 +144,7 @@ public class Hash<T extends Comparable<T>> {
                     // Check if the deletion that just occurred renders the
                     // array to be in a state where only half of it is utilized
                     int curr_len = this.key_list[hash].length;
-                    if (this.cap_list[hash]*2 <= curr_len) {
+                    if (this.cap_list[hash]*2 <= curr_len && this.cap_list[hash] != 0) {
                         // The latter half of the array is not being used.
                         // Resize the array to half its length to save space.
                         String[] new_key_list = new String[curr_len/2];
@@ -161,22 +170,17 @@ public class Hash<T extends Comparable<T>> {
         return this.capacity/this.TABLE_SIZE;
     }
 
-    public String printHash() {
+    public String toString() {
         String s = "";
         for (int i = 0; i < this.TABLE_SIZE; i++) {
-            s += "Row " + (i+1) + ": ";
+            s += "Row " + (i+1) + ":\tSize " + this.cap_list[i] + "/" + this.key_list[i].length + ":\t";
+            //s += this.cap_list[i] + " ~ " + this.key_list[i].length + " ! " + this.value_list[i].length + "/\\";
             for (int j = 0; j < this.cap_list[i]; j++) {
-                s += " -- " + this.key_list[i][j] + " | " + this.value_list[i][j] + " -- ";
+                s += this.key_list[i][j] + " | " + this.value_list[i][j] + "\t\t";
             }
             s += ": \n";
         }
         return s;
-    }
-
-    public static void main(String[] args) {
-
-        System.out.println("Hi");
-
     }
 
 }
